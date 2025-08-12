@@ -227,4 +227,24 @@ export const refreshToken = async (): Promise<string> => {
 };
 
 // Export token manager for advanced usage if needed
+
 export const tokenManager = TokenManager.getInstance(); 
+
+
+
+
+
+
+
+
+ Browser → OPTIONS request to API
+   "Can I make a POST request from localhost:5000?"
+
+2. API should respond with:
+   Access-Control-Allow-Origin: http://localhost:5000
+   Access-Control-Allow-Methods: POST, OPTIONS
+   Access-Control-Allow-Headers: Content-Type, Authorization
+   Access-Control-Max-Age: 86400
+
+3. If API responds correctly → Browser proceeds with actual request
+4. If API doesn't respond or blocks OPTIONS → CORS error
