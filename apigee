@@ -5,5 +5,30 @@ Username: bGMxYSqsNUb6F88L9rTY3OOMCynzZKAF
 Password: CQTNIAhIOfkigv5m
 
 
+{
+    "refresh_token_expires_in": "0",
+    "api_product_list": "[Sustainability-Portal_PRODUCT_OAUTH_Dev]",
+    "api_product_list_json": [
+        "Sustainability-Portal_PRODUCT_OAUTH_Dev"
+    ],
+    "organization_name": "haleon-api",
+    "developer.email": "ross.x.hollingsworth@haleon.com",
+    "token_type": "Bearer",
+    "issued_at": "1754967380565",
+    "client_id": "bGMxYSqsNUb6F88L9rTY3OOMCynzZKAF",
+    "access_token": "HzWxuTFH9G8cV7OzhsD1XmOhOGt5",
+    "application_name": "799c4e64-e28b-47b5-b119-95f004e44603",
+    "scope": "",
+    "expires_in": "3599",
+    "refresh_count": "0",
+    "status": "approved"
+}
+
+
+
+
+
+
+
 https://haleon-api-dev.apigee.net/Sustainibility-portal-channel/v1/cm-codes
 x-apikey:  bGMxYSqsNUb6F88L9rTY3OOMCynzZKAF
