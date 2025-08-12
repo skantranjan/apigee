@@ -1,0 +1,9 @@
+https://haleon-api-dev.apigee.net/oauth/v2/client_credential/accesstoken?grant_type=client_credentials
+
+Username: bGMxYSqsNUb6F88L9rTY3OOMCynzZKAF
+
+Password: CQTNIAhIOfkigv5m
+
+
+https://haleon-api-dev.apigee.net/Sustainibility-portal-channel/v1/cm-codes
+x-apikey:  bGMxYSqsNUb6F88L9rTY3OOMCynzZKAF
