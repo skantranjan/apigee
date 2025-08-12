@@ -1,250 +1,42 @@
-// API utility functions with OAuth Bearer token and x-apikey for Haleon Apigee
-const OAUTH_URL = 'https://haleon-api-dev.apigee.net/oauth/v2/client_credential/accesstoken';
-const API_BASE_URL = 'https://haleon-api-dev.apigee.net/Sustainibility-portal-channel/v1';
-const CLIENT_ID = 'bGMxYSqsNUb6F88L9rTY3OOMCynzZKAF';
-const CLIENT_SECRET = 'CQTNIAhIOfkigv5m';
-const X_API_KEY = 'bGMxYSqsNUb6F88L9rTY3OOMCynzZKAF';
+The Fix You Need
+Your Apigee API proxy needs to be configured to allow and handle OPTIONS requests. Here's what to do:
+1. In Apigee Edge UI:
+Go to your eap-oauth API proxy
+Click Develop tab
+Look for the Policies section
+2. Add CORS Policy:
+<CORS>
+    <DisplayName>CORS Policy</DisplayName>
+    <Add>
+        <Headers>
+            <Header>Access-Control-Allow-Origin</Header>
+            <Header>Access-Control-Allow-Methods</Header>
+            <Header>Access-Control-Allow-Headers</Header>
+            <Header>Access-Control-Max-Age</Header>
+        </Headers>
+    </Add>
+    <Set>
+        <Headers>
+            <Header name="Access-Control-Allow-Origin">http://localhost:5000</Header>
+            <Header name="Access-Control-Allow-Methods">GET, POST, OPTIONS</Header>
+            <Header name="Access-Control-Allow-Headers">Content-Type, Authorization, x-apikey</Header>
+            <Header name="Access-Control-Max-Age">86400</Header>
+        </Headers>
+    </Set>
+</CORS>
 
-interface TokenResponse {
-  access_token: string;
-  expires_in: number;
-  token_type: string;
-  issued_at: string;
-}
-
-interface TokenData {
-  token: string;
-  expiresAt: number;
-}
-
-class TokenManager {
-  private static instance: TokenManager;
-  private tokenData: TokenData | null = null;
-
-  private constructor() {}
-
-  static getInstance(): TokenManager {
-    if (!TokenManager.instance) {
-      TokenManager.instance = new TokenManager();
-    }
-    return TokenManager.instance;
-  }
-
-  private async fetchNewToken(): Promise<string> {
-    const credentials = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
-    
-    const response = await fetch(`${OAUTH_URL}?grant_type=client_credentials`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to get access token: ${response.status} ${response.statusText}`);
-    }
-
-    const tokenResponse: TokenResponse = await response.json();
-    
-    // Calculate expiration time (subtract 60 seconds buffer)
-    const expiresAt = Date.now() + (tokenResponse.expires_in - 60) * 1000;
-    
-    this.tokenData = {
-      token: tokenResponse.access_token,
-      expiresAt
-    };
-
-    return tokenResponse.access_token;
-  }
-
-  async getValidToken(): Promise<string> {
-    // Check if we have a valid token
-    if (this.tokenData && Date.now() < this.tokenData.expiresAt) {
-      return this.tokenData.token;
-    }
-
-    // Token expired or doesn't exist, fetch new one
-    return this.fetchNewToken();
-  }
-
-  clearToken(): void {
-    this.tokenData = null;
-  }
-}
-
-// Helper function to create headers with Authorization and x-apikey
-const createHeaders = async (contentType?: string): Promise<HeadersInit> => {
-  const tokenManager = TokenManager.getInstance();
-  const token = await tokenManager.getValidToken();
-  
-  const headers: HeadersInit = {
-    'Authorization': `Bearer ${token}`,
-    'x-apikey': X_API_KEY
-  };
-  
-  if (contentType) {
-    headers['Content-Type'] = contentType;
-  }
-  
-  return headers;
-};
-
-// GET request helper
-export const apiGet = async (endpoint: string): Promise<any> => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'GET',
-    headers: await createHeaders()
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  
-  return response.json();
-};
-
-// POST request helper
-export const apiPost = async (endpoint: string, data: any, contentType: string = 'application/json'): Promise<any> => {
-  const body = contentType === 'application/json' ? JSON.stringify(data) : data;
-  
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'POST',
-    headers: await createHeaders(contentType),
-    body
-  });
-  
-  if (!response.ok) {
-    // Try to get the error message from the response
-    let errorMessage = `HTTP error! status: ${response.status}`;
-    try {
-      const errorData = await response.json();
-      if (errorData.message) {
-        errorMessage = `${errorMessage} - ${errorData.message}`;
-      }
-    } catch (e) {
-      // If we can't parse the response, use the status text
-      errorMessage = `${errorMessage} - ${response.statusText}`;
-    }
-    throw new Error(errorMessage);
-  }
-  
-  return response.json();
-};
-
-// PUT request helper
-export const apiPut = async (endpoint: string, data: any, contentType: string = 'application/json'): Promise<any> => {
-  const body = contentType === 'application/json' ? JSON.stringify(data) : data;
-  
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'PUT',
-    headers: await createHeaders(contentType),
-    body
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  
-  return response.json();
-};
-
-// PATCH request helper
-export const apiPatch = async (endpoint: string, data: any): Promise<any> => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'PATCH',
-    headers: await createHeaders('application/json'),
-    body: JSON.stringify(data)
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  
-  return response.json();
-};
-
-// DELETE request helper
-export const apiDelete = async (endpoint: string): Promise<any> => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'DELETE',
-    headers: await createHeaders()
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  
-  return response.json();
-};
-
-// For FormData requests (no Content-Type header needed)
-export const apiPostFormData = async (endpoint: string, formData: FormData): Promise<any> => {
-  const tokenManager = TokenManager.getInstance();
-  const token = await tokenManager.getValidToken();
-  
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'x-apikey': X_API_KEY
-    },
-    body: formData
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  
-  return response.json();
-};
-
-export const apiPutFormData = async (endpoint: string, formData: FormData): Promise<any> => {
-  const tokenManager = TokenManager.getInstance();
-  const token = await tokenManager.getValidToken();
-  
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'x-apikey': X_API_KEY
-    },
-    body: formData
-  });
-  
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-  
-  return response.json();
-};
-
-// Utility function to manually refresh token (useful for testing or manual token refresh)
-export const refreshToken = async (): Promise<string> => {
-  const tokenManager = TokenManager.getInstance();
-  tokenManager.clearToken();
-  return tokenManager.getValidToken();
-};
-
-// Export token manager for advanced usage if needed
-
-export const tokenManager = TokenManager.getInstance(); 
-
-
-
-
-
-
-
-
- Browser → OPTIONS request to API
-   "Can I make a POST request from localhost:5000?"
-
-2. API should respond with:
-   Access-Control-Allow-Origin: http://localhost:5000
-   Access-Control-Allow-Methods: POST, OPTIONS
-   Access-Control-Allow-Headers: Content-Type, Authorization
-   Access-Control-Max-Age: 86400
-
-3. If API responds correctly → Browser proceeds with actual request
-4. If API doesn't respond or blocks OPTIONS → CORS error
+3. Handle OPTIONS Method:
+Add a conditional flow specifically for OPTIONS requests:
+<Flow name="Options">
+    <Request>
+        <Step>
+            <Name>CORS-Policy</Name>
+        </Step>
+    </Request>
+    <Response>
+        <Step>
+            <Name>CORS-Policy</Name>
+        </Step>
+    </Response>
+    <Condition>request.verb == "OPTIONS"</Condition>
+</Flow>
